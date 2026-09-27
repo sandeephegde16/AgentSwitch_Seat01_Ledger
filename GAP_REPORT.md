@@ -22,25 +22,27 @@ The underlying ledger is nevertheless **internally consistent on the controls te
 
 ## 2. Which gaps can an agent close with the tools this seat already has?
 
-A surprising number can be closed today without changing the platform.
+A surprising number can be closed today without changing the platform. I have limited the claims below to what this seat owns (invoices, bills, payments and the general ledger) and to what I have verified with this seat's tools.
 
-**Dispute investigation and credit-note drafting** is the strongest example. An agent can:
+**What my agent will do**
 
-`Party → Invoice → PaymentReceived → CreditNote → GL → AccountingPeriod / TransactionLock → CreditNote.create → approval`
+1. **Dispute investigation and credit-note drafting**, the strongest example. The agent follows:
 
-It can establish what was billed, what has actually been allocated as payment, previous credits, outstanding exposure, whether the original period is locked, the customer's GST treatment, and then create an invoice-linked **draft** credit note for human approval. The seat already exposes the required credit-note tools and workflow states.
+   `Party → Invoice → PaymentReceived → CreditNote → GL → AccountingPeriod / TransactionLock → CreditNote.create → approval`
 
-The same tools can also support:
+   It establishes what was billed, what has actually been allocated as payment, previous credits, outstanding exposure, whether the original period is locked and the customer's GST treatment. It then drafts an invoice-linked credit note for human approval. The seat already exposes the required credit-note tools and workflow states. I have run the investigation read-only on live data. I have not executed the write step (`CreditNote.create`), because the book is shared with two other teams. If writes are not permitted, the agent prepares the exact call for a human to run instead. All figures are recomputed live, because other teams change the same book.
 
-- AR ageing and AR-to-GL reconciliation;
-- transaction drill-down from an account balance to source documents;
-- anomaly and duplicate scans;
-- proposed bank matches;
-- close-readiness checks;
-- accrual proposals escalated to a human;
-- dunning/reminder drafts.
+2. **Sub-ledger to GL tie-out.** The receivable documents reconcile to the AR control account (open invoices + unaged opening journals − unapplied credit notes = GL 1100). I verified this to the paisa.
 
-Some apparent gaps are only **MCP surface gaps**. AR/AP ageing, report drill-down, reconciliation workbench and other functions already exist over REST but are not exposed to this seat's MCP. Exposing those capabilities plus date-range filters and aggregation would materially simplify the agent.
+3. **Drill-down from an account balance to its source documents**: `Account → GLEntry → voucher`. I verified this on AR 1100 (490 entries).
+
+**Possible with these tools, but not part of my build**
+
+- anomaly and duplicate scans on the GL;
+- close-readiness checks (open periods, locks, drafts, unapplied credits);
+- accrual proposals escalated to a human.
+
+Some apparent gaps are only **MCP surface gaps**. Report drill-down, the reconciliation workbench and other functions already exist over REST but are not exposed to this seat's MCP. Exposing those capabilities plus date-range filters and aggregation would materially simplify the agent.
 
 An agent **cannot** solve missing bank-feed ingestion, IRP/GSTN integration, GSTR amendment models, journal posting permissions, close/sign-off functionality or inaccessible audit records. These require platform changes.
 
@@ -58,6 +60,6 @@ It finds **₹5,04,890 billed, ₹1,71,429.20 allocated as payment and ₹3,33,4
 
 It can then determine that the original quarter is closed, preserve the customer's SEZ treatment and place of supply, draft the ₹17,596.80 invoice-linked credit note in the open period, explain its arithmetic and assumptions, and submit it for human approval rather than posting autonomously.
 
-Campfire's public material demonstrates sophisticated reconciliation, accrual, anomaly, close and cross-system agents, but I found no public documentation of India-specific GSTN/GSTR/IRN workflows; its published integrations focus instead on banking, payroll, CRM, revenue and sales-tax systems. Zoho provides the India-compliance capabilities, but our opportunity is to combine those jurisdiction-specific accounting rules with this platform's own state machine, CRM context and write-enabled MCP actions.
+Campfire's public material demonstrates sophisticated reconciliation, accrual, anomaly, close and cross-system agents, but I found no public documentation of India-specific GSTN/GSTR/IRN workflows; its published integrations focus instead on banking, payroll, CRM, revenue and sales-tax systems. Zoho provides the India-compliance capabilities, but our opportunity is to combine those jurisdiction-specific accounting rules with this platform's own state machine, period locks and write-enabled MCP actions, tying every figure in a dispute back to its GL postings.
 
 **Therefore the agent I will build is a dispute investigator and credit-note drafter:** it investigates the full customer/accounting state, identifies ambiguity rather than hiding it, applies period and GST guardrails, creates only a draft, and leaves the financially consequential approval/posting action with a human.
